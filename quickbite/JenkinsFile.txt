@@ -1,0 +1,23 @@
+node {
+    stage('Git checkout'){
+        git branch: 'main', url: 'https://github.com/mostafa566/pipline.git'
+    }
+    
+    stage('make an image of project'){
+       sh 'docker image build -t quickbite-httpd:latest -f quickbite/DockerFile quickbite/'
+    }
+    stage('push image to my registery'){
+        withCredentials([string(credentialsId: 'last', variable: 'lasthubname')]) {
+               
+            sh 'docker tag quickbite-httpd:latest mostafahossam11/myhub:latest'
+            sh 'docker login -u mostafahossam11 -p $lasthubname'
+            sh 'docker image push mostafahossam11/myhub:latest '
+            }
+    }
+    stage('dockerized image on webapp EC2'){
+        sshagent(['sshconnect']) {
+            sh 'ssh -o StrictHostKeyChecking=no ubuntu@3.238.152.172 docker run -d --name weebbssiittee -p 9009:80 mostafahossam11/myhub:latest'
+           
+        }
+    }
+}
